@@ -27,7 +27,7 @@ export async function toggleTodo(id: string, termine: boolean) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  await supabase.from('todos').update({ termine: !termine }).eq('id', id)
+  await supabase.from('todos').update({ termine: !termine }).eq('id', id).eq('user_id', user.id)
   revalidatePath('/dashboard')
 }
 
@@ -36,6 +36,6 @@ export async function deleteTodo(id: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  await supabase.from('todos').delete().eq('id', id)
+  await supabase.from('todos').delete().eq('id', id).eq('user_id', user.id)
   revalidatePath('/dashboard')
 }
