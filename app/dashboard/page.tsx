@@ -4,6 +4,19 @@ import { logout } from '@/app/actions/auth'
 import { toggleTodo, deleteTodo } from '@/app/actions/todos'
 import AddTodoForm from './AddTodoForm'
 
+const priorityColors: Record<string, string> = {
+  Urgent: 'bg-red-100 text-red-700',
+  Haute: 'bg-orange-100 text-orange-700',
+  Moyenne: 'bg-yellow-100 text-yellow-700',
+  Faible: 'bg-green-100 text-green-700',
+}
+
+function formatDate(dateStr: string) {
+  const [year, month, day] = dateStr.split('-')
+  const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'jun', 'jul', 'aoû', 'sep', 'oct', 'nov', 'déc']
+  return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -12,7 +25,7 @@ export default async function DashboardPage() {
 
   const { data: todos, error } = await supabase
     .from('todos')
-    .select('id, titre, termine, created_at')
+    .select('id, titre, termine, created_at, date_echeance, priorite')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -113,14 +126,33 @@ export default async function DashboardPage() {
                       </button>
                     </form>
 
-                    {/* Title */}
-                    <span className={`flex-1 text-sm leading-relaxed ${
-                      todo.termine
-                        ? 'line-through text-slate-400'
-                        : 'text-slate-800'
-                    }`}>
-                      {todo.titre}
-                    </span>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-sm leading-relaxed ${
+                        todo.termine
+                          ? 'line-through text-slate-400'
+                          : 'text-slate-800'
+                      }`}>
+                        {todo.titre}
+                      </span>
+                      {(todo.priorite || todo.date_echeance) && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {todo.priorite && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${priorityColors[todo.priorite] ?? 'bg-slate-100 text-slate-600'}`}>
+                              {todo.priorite}
+                            </span>
+                          )}
+                          {todo.date_echeance && (
+                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                              </svg>
+                              {formatDate(todo.date_echeance)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Delete */}
                     <form action={remove}>
